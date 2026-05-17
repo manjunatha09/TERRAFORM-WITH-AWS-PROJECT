@@ -6,7 +6,7 @@ Provisioning a highly available AWS web infrastructure with Terraform — VPC, p
 
 ## 📐 Architecture Overview
 
-![AWS Terraform Infrastructure](AWS_Terraform_Infra.jpg)
+![AWS Terraform Infrastructure](AWS%20Terraform%20Infra.jpg)
 
 The infrastructure spans **two Availability Zones** (`us-east-1a` and `us-east-1b`) for high availability, with an Application Load Balancer distributing traffic across two EC2 web servers. Static web content is served from S3 via IAM role-based access.
 
@@ -127,3 +127,7 @@ Open this URL in your browser to see the load-balanced web application.
 - **Storage:** Amazon S3
 - **Compute:** Amazon EC2 (t3.micro, Ubuntu)
 - **Networking:** VPC, IGW, Route Tables, Security Groups, ALB
+
+--------
+#Author 
+Manjunatha C
