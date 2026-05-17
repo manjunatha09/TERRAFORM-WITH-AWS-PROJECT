@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terraform × AWS | Server 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #f5f0e8;
+  --cream2: #ede7d9;
+  --white: #fdfaf5;
+  --ink: #111008;
+  --ink2: #2a2416;
+  --muted: #7a7060;
+  --coral: #ff4d2e;
+  --blue: #1a56ff;
+  --gold: #e8a020;
+  --green: #00b87a;
+  --border: #d4cbbf;
+  --border2: #c4b9aa;
+  --card: #f9f4ec;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* CURSOR */
+#cur { width:14px; height:14px; background:var(--coral); border-radius:50%; position:fixed; top:0;left:0; pointer-events:none; z-index:9999; mix-blend-mode:multiply; transition:transform 0.1s; }
+#cur-ring { width:40px;height:40px; border:2px solid var(--ink); border-radius:50%; position:fixed;top:0;left:0; pointer-events:none; z-index:9998; transition:all 0.14s ease; }
+
+/* PROGRESS */
+#prog { position:fixed;top:0;left:0;height:3px;background:var(--coral);z-index:9999;transition:width 0.1s; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:var(--cream2); }
+::-webkit-scrollbar-thumb { background:var(--coral); border-radius:3px; }
+
+/* NAV */
+nav {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:0 60px; height:72px;
+  border-bottom:2px solid var(--ink);
+  position:sticky; top:0; z-index:1000;
+  background:var(--cream);
+}
+.nav-logo {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:28px; letter-spacing:2px; color:var(--ink);
+  display:flex; align-items:center; gap:10px;
+}
+.nav-logo .badge {
+  font-family:'Outfit',sans-serif;
+  font-size:10px; font-weight:700;
+  background:var(--coral); color:white;
+  padding:3px 10px; border-radius:2px; letter-spacing:2px;
+  text-transform:uppercase;
+}
+.nav-links { display:flex; gap:0; list-style:none; }
+.nav-links li { border-left:1px solid var(--border); }
+.nav-links li:last-child { border-right:1px solid var(--border); }
+.nav-links a {
+  display:block; padding:0 24px; line-height:72px;
+  font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase;
+  color:var(--muted); text-decoration:none; cursor:none; transition:0.2s;
+}
+.nav-links a:hover { background:var(--ink); color:white; }
+.nav-server {
+  font-family:'Outfit',sans-serif; font-size:12px; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase; color:var(--green);
+  display:flex; align-items:center; gap:8px;
+}
+.nav-server::before { content:''; width:8px;height:8px;background:var(--green);border-radius:50%; animation:blink-dot 1.5s ease infinite; }
+@keyframes blink-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+
+/* HERO */
+.hero {
+  min-height:100vh; display:grid;
+  grid-template-columns:1fr 1fr;
+  border-bottom:2px solid var(--ink);
+}
+.hero-left {
+  padding:80px 60px;
+  border-right:2px solid var(--ink);
+  display:flex; flex-direction:column; justify-content:center;
+  position:relative; overflow:hidden;
+}
+.hero-left::before {
+  content:'';
+  position:absolute;
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(255,77,46,0.08),transparent 70%);
+  bottom:-100px;left:-100px; pointer-events:none;
+}
+.hero-tag {
+  font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase;
+  color:var(--coral); margin-bottom:28px;
+  display:flex; align-items:center; gap:12px;
+  opacity:0; animation:slideIn 0.6s 0.1s ease forwards;
+}
+.hero-tag::before { content:''; width:30px;height:2px;background:var(--coral); }
+.hero h1 {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(80px,10vw,160px);
+  line-height:0.88; letter-spacing:2px;
+  margin-bottom:32px;
+  opacity:0; animation:slideIn 0.7s 0.25s ease forwards;
+}
+.hero h1 em {
+  font-family:'Instrument Serif',serif;
+  font-style:italic; color:var(--coral);
+  font-size:0.85em;
+}
+.hero-desc {
+  font-size:17px; line-height:1.8; color:var(--muted);
+  max-width:480px; margin-bottom:48px;
+  opacity:0; animation:slideIn 0.7s 0.4s ease forwards;
+}
+.hero-btns {
+  display:flex; gap:14px; flex-wrap:wrap;
+  opacity:0; animation:slideIn 0.7s 0.55s ease forwards;
+}
+.btn-fill {
+  padding:16px 36px; background:var(--ink); color:white;
+  font-family:'Outfit',sans-serif; font-weight:700; font-size:14px;
+  letter-spacing:1px; text-transform:uppercase;
+  border:2px solid var(--ink); cursor:none; transition:0.25s;
+  border-radius:2px;
+}
+.btn-fill:hover { background:var(--coral); border-color:var(--coral); transform:translateY(-3px); }
+.btn-ghost {
+  padding:16px 36px; background:transparent; color:var(--ink);
+  font-family:'Outfit',sans-serif; font-weight:700; font-size:14px;
+  letter-spacing:1px; text-transform:uppercase;
+  border:2px solid var(--ink); cursor:none; transition:0.25s;
+  border-radius:2px;
+}
+.btn-ghost:hover { background:var(--ink); color:white; transform:translateY(-3px); }
+
+/* HERO RIGHT */
+.hero-right {
+  padding:60px; display:flex; align-items:center; justify-content:center;
+  background:var(--card); position:relative; overflow:hidden;
+}
+.hero-right::before {
+  content:'INFRA';
+  font-family:'Bebas Neue',sans-serif;
+  font-size:200px; color:rgba(0,0,0,0.04);
+  position:absolute; bottom:-20px; right:-20px;
+  pointer-events:none; line-height:1;
+}
+#infra-diagram {
+  width:100%;max-width:520px;
+  opacity:0; animation:fadeIn 1s 0.8s ease forwards;
+}
+
+/* STATS ROW */
+.stats-row {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  border-bottom:2px solid var(--ink);
+}
+.stat-box {
+  padding:40px 50px;
+  border-right:1px solid var(--border);
+  position:relative; overflow:hidden; transition:0.3s;
+}
+.stat-box:last-child { border-right:none; }
+.stat-box:hover { background:var(--ink); }
+.stat-box:hover .s-num,.stat-box:hover .s-label { color:white; }
+.stat-box:hover .s-sub { color:rgba(255,255,255,0.5); }
+.s-num { font-family:'Bebas Neue',sans-serif; font-size:64px; line-height:1; color:var(--ink); transition:0.3s; }
+.s-label { font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:6px; transition:0.3s; }
+.s-sub { font-size:11px;color:var(--muted);margin-top:4px;font-family:'Outfit',sans-serif; transition:0.3s; }
+.s-accent { color:var(--coral); }
+
+/* MARQUEE */
+.marquee-bar { background:var(--ink); padding:18px 0; overflow:hidden; white-space:nowrap; }
+.marquee-inner { display:inline-flex;gap:50px;animation:marquee 22s linear infinite; }
+.marquee-inner span {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px; letter-spacing:3px; color:var(--cream);
+  display:flex;align-items:center;gap:20px;
+}
+.marquee-inner span::after { content:'✦'; color:var(--coral);font-size:14px; }
+@keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+/* TRAFFIC SECTION */
+.traffic-section {
+  display:grid;grid-template-columns:1fr 1fr;
+  border-bottom:2px solid var(--ink);
+}
+.traffic-left { padding:80px 60px; border-right:2px solid var(--ink); }
+.traffic-right { padding:60px; background:var(--card); display:flex;flex-direction:column;justify-content:center; }
+.section-eyebrow {
+  font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:var(--coral); margin-bottom:20px;
+  display:flex;align-items:center;gap:10px;
+}
+.section-eyebrow::before{content:'';width:24px;height:2px;background:var(--coral);}
+.section-heading { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,5vw,80px); line-height:0.95; letter-spacing:1px; margin-bottom:24px; }
+.section-body { font-size:16px;line-height:1.8;color:var(--muted);margin-bottom:36px; }
+.traffic-canvas-wrap { position:relative; border:2px solid var(--ink); border-radius:4px; overflow:hidden; background:var(--cream); margin-bottom:20px; }
+#trafficCanvas { display:block;width:100%; }
+.traffic-legend { display:flex;gap:20px;flex-wrap:wrap; font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted); }
+.leg-item { display:flex;align-items:center;gap:8px; }
+.leg-dot { width:10px;height:10px;border-radius:50%; }
+.req-counter { display:grid;grid-template-columns:1fr 1fr; gap:12px;margin-top:24px; }
+.req-box { padding:20px 24px; border:1px solid var(--border); border-radius:4px; background:white; transition:0.3s; }
+.req-box:hover{border-color:var(--coral);}
+.req-box-num { font-family:'Bebas Neue',sans-serif;font-size:40px; line-height:1; }
+.req-box-label {font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+
+/* AWS SERVICES */
+.services-section {padding:80px 60px;border-bottom:2px solid var(--ink);}
+.services-header { display:flex;justify-content:space-between;align-items:flex-end; margin-bottom:60px; }
+.services-grid-layout { display:grid;grid-template-columns:repeat(3,1fr); gap:2px; border:2px solid var(--ink); }
+.service-tile { padding:40px; background:var(--white); border:1px solid var(--border); position:relative;overflow:hidden;transition:0.3s;cursor:none; }
+.service-tile:hover { background:var(--ink);z-index:2;transform:scale(1.02); }
+.service-tile:hover .tile-num,.service-tile:hover .tile-name,.service-tile:hover .tile-body { color:white; }
+.tile-num { font-family:'Bebas Neue',sans-serif;font-size:64px;color:var(--cream2); line-height:1;margin-bottom:20px;transition:0.3s; }
+.tile-icon { font-size:28px;margin-bottom:12px;display:block;transition:0.3s; }
+.tile-name { font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px; margin-bottom:12px;transition:0.3s; }
+.tile-body {font-size:14px;line-height:1.7;color:var(--muted);transition:0.3s;}
+
+/* ARCHITECTURE */
+.arch-section { padding:80px 60px; border-bottom:2px solid var(--ink); background:var(--ink);color:var(--cream); }
+.arch-section .section-eyebrow::before{background:var(--coral);}
+.arch-flow { display:flex;align-items:center;justify-content:center; gap:0; flex-wrap:wrap;margin-top:60px; }
+.arch-node { display:flex;flex-direction:column;align-items:center; padding:28px 32px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); border-radius:6px; min-width:130px;text-align:center; transition:0.3s;cursor:none; }
+.arch-node:hover{background:rgba(255,77,46,0.15);border-color:var(--coral);transform:translateY(-6px);}
+.arch-node-icon{font-size:32px;margin-bottom:12px;}
+.arch-node-name{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:var(--cream);}
+.arch-node-tag{font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
+.arch-arrow { font-size:24px;color:var(--coral);padding:0 8px; animation:arrow-pulse 2s ease infinite; }
+@keyframes arrow-pulse{0%,100%{transform:translateX(0);opacity:1}50%{transform:translateX(4px);opacity:0.6}}
+
+/* TEAM */
+.team-section { display:grid;grid-template-columns:repeat(3,1fr); border-bottom:2px solid var(--ink); }
+.team-member { padding:60px 50px; border-right:1px solid var(--border); position:relative;overflow:hidden;transition:0.4s; }
+.team-member:last-child{border-right:none;}
+.team-member:nth-child(1):hover{background:rgba(255,77,46,0.06);}
+.team-member:nth-child(2):hover{background:rgba(26,86,255,0.06);}
+.team-member:nth-child(3):hover{background:rgba(0,184,122,0.06);}
+.member-num { font-family:'Bebas Neue',sans-serif;font-size:100px;color:var(--cream2); line-height:1;margin-bottom:24px; }
+.team-member:nth-child(1) .member-num{color:rgba(255,77,46,0.12);}
+.team-member:nth-child(2) .member-num{color:rgba(26,86,255,0.12);}
+.team-member:nth-child(3) .member-num{color:rgba(0,184,122,0.12);}
+.member-name { font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:1px; margin-bottom:8px; }
+.member-role{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:24px;}
+.member-skills{display:flex;flex-direction:column;gap:10px;}
+.skill-row { display:flex;align-items:center;gap:12px; font-size:13px;font-weight:600;color:var(--ink2); }
+.skill-bar-wrap{flex:1;height:3px;background:var(--cream2);border-radius:2px;}
+.skill-bar{height:100%;border-radius:2px;transition:width 1.5s ease;}
+.skill-bar-1{background:var(--coral);}
+.skill-bar-2{background:var(--blue);}
+.skill-bar-3{background:var(--green);}
+
+/* CONTACT */
+.contact-section{padding:100px 60px;text-align:center;position:relative;overflow:hidden;}
+.contact-section::before { content:'CONNECT';font-family:'Bebas Neue',sans-serif;font-size:300px; color:rgba(0,0,0,0.03);position:absolute;top:50%;left:50%; transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap; }
+.contact-inner{max-width:700px;margin:0 auto;position:relative;}
+.contact-inner h2{ font-family:'Bebas Neue',sans-serif;font-size:clamp(60px,8vw,110px); letter-spacing:2px;line-height:0.9;margin-bottom:28px; }
+.contact-inner h2 em{font-family:'Instrument Serif',serif;font-style:italic;color:var(--coral);}
+.contact-inner p{font-size:17px;color:var(--muted);line-height:1.8;margin-bottom:44px;}
+.contact-chips{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.chip { padding:12px 24px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase; border:2px solid var(--border);color:var(--muted);border-radius:100px;cursor:none;transition:0.25s; }
+.chip:hover{border-color:var(--ink);color:var(--ink);transform:translateY(-2px);}
+
+/* FOOTER */
+footer{ display:flex;justify-content:space-between;align-items:center; padding:28px 60px;border-top:2px solid var(--ink); background:var(--ink); }
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;color:var(--cream);}
+.footer-copy{font-size:12px;color:rgba(255,255,255,0.4);font-family:'Outfit',sans-serif;letter-spacing:1px;}
+.footer-server{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--green);display:flex;align-items:center;gap:6px;}
+.footer-server::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(36px);transition:opacity 0.7s ease,transform 0.7s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-left{opacity:0;transform:translateX(-40px);transition:opacity 0.7s ease,transform 0.7s ease;}
+.reveal-left.visible{opacity:1;transform:translateX(0);}
+
+@keyframes slideIn{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ═══════════════════════════════════════════
+   AI CHAT — FLOATING BUTTON & PANEL
+═══════════════════════════════════════════ */
+
+/* Floating AI button */
+.ai-fab {
+  position: fixed;
+  bottom: 36px;
+  right: 36px;
+  width: 68px;
+  height: 68px;
+  background: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: none;
+  z-index: 8888;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.12);
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  overflow: hidden;
+}
+.ai-fab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(from 0deg, var(--coral), var(--blue), var(--green), var(--coral));
+  border-radius: 50%;
+  animation: spin-hue 4s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.ai-fab:hover::before { opacity: 1; }
+.ai-fab:hover { transform: scale(1.12) translateY(-4px); box-shadow: 0 16px 48px rgba(255,77,46,0.35); }
+.ai-fab svg { position: relative; z-index: 1; }
+@keyframes spin-hue { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+/* Pulse ring around FAB */
+.ai-fab-pulse {
+  position: fixed;
+  bottom: 36px;
+  right: 36px;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 2px solid var(--coral);
+  z-index: 8887;
+  animation: pulse-ring 2.4s ease infinite;
+  pointer-events: none;
+}
+@keyframes pulse-ring { 0%{transform:scale(1);opacity:0.7} 100%{transform:scale(1.7);opacity:0} }
+
+/* FAB label */
+.ai-fab-label {
+  position: fixed;
+  bottom: 48px;
+  right: 116px;
+  background: var(--ink);
+  color: white;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 8888;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(8px);
+  transition: all 0.2s ease;
+}
+.ai-fab-label::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 4px solid transparent;
+  border-left-color: var(--ink);
+}
+.ai-fab:hover ~ .ai-fab-label,
+.ai-fab-label:hover { opacity: 1; transform: translateX(0); }
+
+/* Chat panel */
+.chat-panel {
+  position: fixed;
+  bottom: 120px;
+  right: 36px;
+  width: 440px;
+  max-height: 680px;
+  background: var(--white);
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  z-index: 8890;
+  box-shadow: 12px 12px 0 var(--ink), 0 24px 80px rgba(0,0,0,0.22);
+  transform: scale(0.85) translateY(30px);
+  transform-origin: bottom right;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.35s cubic-bezier(0.34,1.3,0.64,1);
+}
+.chat-panel.open {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Chat header */
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 24px;
+  border-bottom: 2px solid var(--ink);
+  background: var(--ink);
+  border-radius: 4px 4px 0 0;
+  flex-shrink: 0;
+}
+.chat-header-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--coral), var(--blue));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  animation: avatar-glow 3s ease infinite;
+}
+@keyframes avatar-glow {
+  0%,100% { box-shadow: 0 0 0 0 rgba(255,77,46,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(255,77,46,0); }
+}
+.chat-header-info { flex: 1; }
+.chat-header-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--cream);
+  line-height: 1;
+}
+.chat-header-status {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--green);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+.chat-header-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: blink-dot 1.5s ease infinite;
+}
+.chat-close {
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 2px;
+  color: var(--cream);
+  font-size: 18px;
+  cursor: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+  flex-shrink: 0;
+}
+.chat-close:hover { background: var(--coral); border-color: var(--coral); }
+
+/* Chat tags */
+.chat-tags {
+  display: flex;
+  gap: 8px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  flex-shrink: 0;
+  background: var(--cream);
+}
+.chat-tags::-webkit-scrollbar { height: 0; }
+.chat-tag {
+  padding: 6px 14px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border: 1.5px solid var(--border);
+  border-radius: 100px;
+  color: var(--muted);
+  cursor: none;
+  white-space: nowrap;
+  transition: 0.2s;
+  background: white;
+  flex-shrink: 0;
+}
+.chat-tag:hover { border-color: var(--coral); color: var(--coral); }
+
+/* Messages area */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scroll-behavior: smooth;
+}
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Message bubbles */
+.msg {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  animation: msg-in 0.3s ease;
+}
+@keyframes msg-in { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+.msg.user { flex-direction: row-reverse; }
+
+.msg-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  border: 2px solid var(--ink);
+}
+.msg.ai .msg-avatar { background: var(--ink); }
+.msg.user .msg-avatar { background: var(--coral); }
+
+.msg-bubble {
+  max-width: 78%;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.7;
+  position: relative;
+}
+.msg.ai .msg-bubble {
+  background: var(--cream);
+  border: 1.5px solid var(--border);
+  color: var(--ink);
+  border-radius: 0 8px 8px 8px;
+}
+.msg.user .msg-bubble {
+  background: var(--ink);
+  color: white;
+  border-radius: 8px 0 8px 8px;
+}
+.msg-time {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.4;
+  margin-top: 4px;
+  display: block;
+}
+.msg.user .msg-time { text-align: right; }
+
+/* Code block inside messages */
+.msg-bubble code {
+  font-family: monospace;
+  background: rgba(0,0,0,0.08);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 12px;
+}
+.msg.user .msg-bubble code { background: rgba(255,255,255,0.15); }
+.msg-bubble pre {
+  background: rgba(0,0,0,0.06);
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin: 8px 0 0;
+  font-family: monospace;
+  font-size: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+.msg.user .msg-bubble pre { background: rgba(255,255,255,0.1); }
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  animation: msg-in 0.3s ease;
+}
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  background: var(--cream);
+  border: 1.5px solid var(--border);
+  padding: 14px 18px;
+  border-radius: 0 8px 8px 8px;
+}
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--muted);
+  border-radius: 50%;
+  animation: bounce 1.2s ease infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-8px)} }
+
+/* Suggestions */
+.chat-suggestions {
+  padding: 0 20px 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.suggestion-chip {
+  padding: 7px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border: 1.5px solid var(--border2);
+  border-radius: 100px;
+  color: var(--muted);
+  cursor: none;
+  transition: 0.2s;
+  background: white;
+}
+.suggestion-chip:hover { border-color: var(--blue); color: var(--blue); transform: translateY(-1px); }
+
+/* Chat input area */
+.chat-input-area {
+  padding: 16px 20px;
+  border-top: 2px solid var(--ink);
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  background: var(--cream);
+  border-radius: 0 0 4px 4px;
+  flex-shrink: 0;
+}
+.chat-input-wrap {
+  flex: 1;
+  position: relative;
+}
+.chat-input {
+  width: 100%;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  padding: 11px 14px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  resize: none;
+  min-height: 44px;
+  max-height: 120px;
+  overflow-y: auto;
+  transition: border-color 0.2s;
+  cursor: text;
+  line-height: 1.5;
+}
+.chat-input:focus { outline: none; border-color: var(--ink); }
+.chat-input::placeholder { color: var(--muted); }
+.chat-send {
+  width: 44px;
+  height: 44px;
+  background: var(--ink);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+  flex-shrink: 0;
+}
+.chat-send:hover { background: var(--coral); transform: translateY(-2px); }
+.chat-send:disabled { background: var(--border); cursor: not-allowed; transform: none; }
+.chat-send svg { width: 18px; height: 18px; }
+
+/* Token counter / footer */
+.chat-footer-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px 10px;
+  flex-shrink: 0;
+}
+.chat-model-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.chat-model-tag::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  background: var(--blue);
+  border-radius: 50%;
+}
+.chat-clear-btn {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: none;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  transition: color 0.2s;
+}
+.chat-clear-btn:hover { color: var(--coral); }
+
+/* Error state */
+.msg-error {
+  background: rgba(255,77,46,0.08) !important;
+  border-color: rgba(255,77,46,0.3) !important;
+  color: var(--coral) !important;
+}
+
+/* MOBILE */
+@media(max-width:900px){
+  .hero,.traffic-section{grid-template-columns:1fr;}
+  .hero-right{display:none;}
+  .hero-left,.traffic-left{border-right:none;}
+  .stats-row,.services-grid-layout,.team-section{grid-template-columns:1fr 1fr;}
+  nav{padding:0 24px;}
+  .nav-links{display:none;}
+  .services-section,.arch-section,.contact-section{padding:60px 24px;}
+  .traffic-left,.traffic-right{padding:40px 24px;}
+  footer{padding:24px;}
+  .arch-flow{gap:10px;}
+  .chat-panel { width: calc(100vw - 32px); right: 16px; bottom: 100px; }
+  .ai-fab { bottom: 20px; right: 20px; }
+  .ai-fab-pulse { bottom: 20px; right: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+<div id="prog"></div>
+
+<!-- NAV -->
+<nav id="navbar">
+  <div class="nav-logo">TF<span style="color:var(--coral);margin:0 4px">×</span>AWS <span class="badge">Server 2</span></div>
+  <ul class="nav-links">
+    <li><a href="#home">Home</a></li>
+    <li><a href="#traffic">Traffic</a></li>
+    <li><a href="#stack">Stack</a></li>
+    <li><a href="#arch">Architecture</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#" onclick="openChat();return false;" style="color:var(--coral)">AI Chat</a></li>
+  </ul>
+  <div class="nav-server">EC2 Instance Active</div>
+</nav>
+
+<!-- HERO -->
+<div class="hero" id="home">
+  <div class="hero-left">
+    <div class="hero-tag">Mysore University School of Engineering · DevOps · 2026</div>
+    <h1>Cloud<br><em>Infra</em><br>Auto.</h1>
+    <p class="hero-desc">
+      AWS infrastructure provisioned entirely by Terraform — VPC, EC2, Load Balancer, S3 — zero manual clicks. You're viewing <strong>Server 2</strong> through the Application Load Balancer.
+    </p>
+    <div class="hero-btns">
+      <button class="btn-fill" onclick="document.getElementById('traffic').scrollIntoView({behavior:'smooth'})">See Live Traffic</button>
+      <button class="btn-ghost" onclick="document.getElementById('arch').scrollIntoView({behavior:'smooth'})">Architecture →</button>
+    </div>
+  </div>
+  <div class="hero-right">
+    <svg id="infra-diagram" viewBox="0 0 520 460" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="260" cy="50" r="40" fill="#f5f0e8" stroke="#111008" stroke-width="2"/>
+      <text x="260" y="44" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="13" fill="#111008">INTERNET</text>
+      <text x="260" y="60" text-anchor="middle" font-size="20">🌐</text>
+      <line x1="260" y1="90" x2="260" y2="130" stroke="#111008" stroke-width="2" stroke-dasharray="5,4"/>
+      <rect x="160" y="130" width="200" height="60" rx="4" fill="#ff4d2e" stroke="#111008" stroke-width="2"/>
+      <text x="260" y="156" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="16" fill="white" letter-spacing="2">APP LOAD BALANCER</text>
+      <text x="260" y="178" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.8)" font-family="Outfit,sans-serif">Distributes traffic</text>
+      <line x1="200" y1="190" x2="130" y2="270" stroke="#111008" stroke-width="2" stroke-dasharray="5,4"/>
+      <line x1="260" y1="190" x2="260" y2="270" stroke="#111008" stroke-width="2" stroke-dasharray="5,4"/>
+      <line x1="320" y1="190" x2="390" y2="270" stroke="#111008" stroke-width="2" stroke-dasharray="5,4"/>
+      <rect x="60" y="270" width="140" height="80" rx="4" fill="#f5f0e8" stroke="#111008" stroke-width="2"/>
+      <text x="130" y="300" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="14" fill="#111008">EC2 SERVER 1</text>
+      <text x="130" y="318" text-anchor="middle" font-size="10" fill="#7a7060" font-family="Outfit,sans-serif">Dark Theme · Port 80</text>
+      <circle cx="130" cy="335" r="5" fill="#00b87a"/>
+      <rect x="190" y="270" width="140" height="80" rx="4" fill="#1a56ff" stroke="#111008" stroke-width="3"/>
+      <text x="260" y="300" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="14" fill="white">EC2 SERVER 2</text>
+      <text x="260" y="318" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.7)" font-family="Outfit,sans-serif">Light Theme · Port 80</text>
+      <text x="260" y="338" text-anchor="middle" font-size="9" fill="#b8ff3a" font-family="Bebas Neue,sans-serif" letter-spacing="1">← YOU ARE HERE</text>
+      <rect x="320" y="270" width="140" height="80" rx="4" fill="#f5f0e8" stroke="#111008" stroke-width="2"/>
+      <text x="390" y="296" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="13" fill="#111008">TARGET GROUP</text>
+      <text x="390" y="314" text-anchor="middle" font-size="10" fill="#7a7060" font-family="Outfit,sans-serif">Health checks</text>
+      <circle cx="390" cy="332" r="5" fill="#00b87a"/>
+      <rect x="30" y="240" width="460" height="130" rx="8" fill="none" stroke="#d4cbbf" stroke-width="1.5" stroke-dasharray="8,4"/>
+      <text x="42" y="256" font-family="Outfit,sans-serif" font-size="10" fill="#7a7060" font-weight="700" letter-spacing="2">VPC 10.0.0.0/16</text>
+      <rect x="60" y="400" width="120" height="48" rx="4" fill="#f5f0e8" stroke="#111008" stroke-width="2"/>
+      <text x="120" y="422" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="13" fill="#111008">S3 BUCKET</text>
+      <text x="120" y="438" text-anchor="middle" font-size="9" fill="#7a7060" font-family="Outfit,sans-serif">Static storage</text>
+      <rect x="340" y="400" width="120" height="48" rx="4" fill="#f5f0e8" stroke="#111008" stroke-width="2"/>
+      <text x="400" y="422" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="13" fill="#111008">INTERNET GW</text>
+      <text x="400" y="438" text-anchor="middle" font-size="9" fill="#7a7060" font-family="Outfit,sans-serif">Public access</text>
+      <circle id="pkt1" cx="260" cy="90" r="5" fill="#ff4d2e" opacity="0.9"/>
+      <circle id="pkt2" cx="260" cy="190" r="5" fill="#1a56ff" opacity="0.9"/>
+    </svg>
+  </div>
+</div>
+
+<!-- STATS ROW -->
+<div class="stats-row reveal">
+  <div class="stat-box">
+    <div class="s-num"><span class="s-accent" id="c1">0</span></div>
+    <div class="s-label">Requests Served</div>
+    <div class="s-sub">by this EC2 instance</div>
+  </div>
+  <div class="stat-box">
+    <div class="s-num">2</div>
+    <div class="s-label">EC2 Servers</div>
+    <div class="s-sub">behind load balancer</div>
+  </div>
+  <div class="stat-box">
+    <div class="s-num">9</div>
+    <div class="s-label">AWS Resources</div>
+    <div class="s-sub">provisioned by Terraform</div>
+  </div>
+  <div class="stat-box">
+    <div class="s-num"><span class="s-accent">0ms</span></div>
+    <div class="s-label">Manual Config</div>
+    <div class="s-sub">100% Infrastructure as Code</div>
+  </div>
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee-bar">
+  <div class="marquee-inner" id="marquee-el"></div>
+</div>
+
+<!-- TRAFFIC SECTION -->
+<div class="traffic-section" id="traffic">
+  <div class="traffic-left">
+    <div class="section-eyebrow">Live ALB Traffic</div>
+    <h2 class="section-heading">Watch the<br>traffic flow</h2>
+    <p class="section-body">The Application Load Balancer distributes incoming requests between both EC2 servers. Every time you refresh, you might land on Server 1 (dark) or Server 2 (light). The visualizer below simulates real-time ALB routing.</p>
+    <div class="req-counter">
+      <div class="req-box">
+        <div class="req-box-num" style="color:var(--coral)" id="srv1-count">0</div>
+        <div class="req-box-label">Server 1 Hits</div>
+      </div>
+      <div class="req-box">
+        <div class="req-box-num" style="color:var(--blue)" id="srv2-count">0</div>
+        <div class="req-box-label">Server 2 Hits</div>
+      </div>
+      <div class="req-box">
+        <div class="req-box-num" style="color:var(--green)" id="total-count">0</div>
+        <div class="req-box-label">Total Requests</div>
+      </div>
+      <div class="req-box">
+        <div class="req-box-num" style="color:var(--gold)" id="latency">0ms</div>
+        <div class="req-box-label">Avg Latency</div>
+      </div>
+    </div>
+    <div style="margin-top:24px">
+      <button class="btn-fill" id="toggle-traffic">⏸ Pause Traffic</button>
+    </div>
+  </div>
+  <div class="traffic-right">
+    <div class="section-eyebrow">Real-time ALB Visualizer</div>
+    <div class="traffic-canvas-wrap">
+      <canvas id="trafficCanvas" width="520" height="340"></canvas>
+    </div>
+    <div class="traffic-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--coral)"></div> Server 1</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div> Server 2</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div> Health Check</div>
+    </div>
+  </div>
+</div>
+
+<!-- AWS SERVICES -->
+<section class="services-section" id="stack">
+  <div class="services-header reveal">
+    <div>
+      <div class="section-eyebrow">AWS Stack</div>
+      <h2 class="section-heading" style="font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,5vw,72px);letter-spacing:1px;line-height:0.95">Everything<br>provisioned</h2>
+    </div>
+    <p style="max-width:320px;font-size:15px;color:var(--muted);line-height:1.8">All 9 AWS services defined in Terraform HCL and deployed in one command. Hover each tile.</p>
+  </div>
+  <div class="services-grid-layout reveal">
+    <div class="service-tile"><div class="tile-num">01</div><span class="tile-icon">🖥️</span><div class="tile-name">Amazon EC2</div><div class="tile-body">Two virtual compute instances running the web servers behind the load balancer.</div></div>
+    <div class="service-tile"><div class="tile-num">02</div><span class="tile-icon">🔗</span><div class="tile-name">Amazon VPC</div><div class="tile-body">Virtual Private Cloud isolating the entire infrastructure in a secure network boundary.</div></div>
+    <div class="service-tile"><div class="tile-num">03</div><span class="tile-icon">🌐</span><div class="tile-name">Public Subnets</div><div class="tile-body">Two public subnets in different availability zones for high availability.</div></div>
+    <div class="service-tile"><div class="tile-num">04</div><span class="tile-icon">🚪</span><div class="tile-name">Internet Gateway</div><div class="tile-body">Enables communication between the VPC and the public internet.</div></div>
+    <div class="service-tile"><div class="tile-num">05</div><span class="tile-icon">🛣️</span><div class="tile-name">Route Tables</div><div class="tile-body">Defines routing rules directing traffic from subnets through the Internet Gateway.</div></div>
+    <div class="service-tile"><div class="tile-num">06</div><span class="tile-icon">🔒</span><div class="tile-name">Security Groups</div><div class="tile-body">Firewall rules controlling inbound and outbound traffic to EC2 instances.</div></div>
+    <div class="service-tile"><div class="tile-num">07</div><span class="tile-icon">🪣</span><div class="tile-name">Amazon S3</div><div class="tile-body">Object storage bucket for static assets, logs, and Terraform state backend.</div></div>
+    <div class="service-tile"><div class="tile-num">08</div><span class="tile-icon">⚖️</span><div class="tile-name">App Load Balancer</div><div class="tile-body">Distributes HTTP traffic across both EC2 instances with health check monitoring.</div></div>
+    <div class="service-tile"><div class="tile-num">09</div><span class="tile-icon">🎯</span><div class="tile-name">Target Groups</div><div class="tile-body">Routes ALB traffic to registered EC2 targets with configurable health checks.</div></div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="arch-section" id="arch">
+  <div class="section-eyebrow" style="color:var(--coral)">Infrastructure Flow</div>
+  <h2 class="section-heading" style="color:var(--cream)">How traffic moves</h2>
+  <div class="arch-flow reveal">
+    <div class="arch-node"><div class="arch-node-icon">👤</div><div class="arch-node-name">User</div><div class="arch-node-tag">Browser</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node"><div class="arch-node-icon">🌐</div><div class="arch-node-name">Internet GW</div><div class="arch-node-tag">VPC Entry</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node" style="border-color:var(--coral);background:rgba(255,77,46,0.1)"><div class="arch-node-icon">⚖️</div><div class="arch-node-name">Load Balancer</div><div class="arch-node-tag" style="color:var(--coral)">ALB</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node"><div class="arch-node-icon">🎯</div><div class="arch-node-name">Target Group</div><div class="arch-node-tag">Health Check</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node" style="border-color:#1a56ff;background:rgba(26,86,255,0.12)"><div class="arch-node-icon">🖥️</div><div class="arch-node-name">EC2 Server 2</div><div class="arch-node-tag" style="color:#1a56ff">← You're here</div></div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node"><div class="arch-node-icon">📄</div><div class="arch-node-name">Response</div><div class="arch-node-tag">HTML Page</div></div>
+  </div>
+  <div style="margin-top:60px;padding:32px 40px;border:1px solid rgba(255,255,255,0.08);border-radius:6px;background:rgba(255,255,255,0.03);max-width:800px;margin-left:auto;margin-right:auto;">
+    <div style="font-family:'Outfit',sans-serif;font-size:13px;color:rgba(255,255,255,0.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;font-weight:700">Terraform Command</div>
+    <div style="font-family:monospace;font-size:14px;line-height:2;color:var(--cream)">
+      <span style="color:#00b87a">$</span> terraform init &amp;&amp; terraform plan &amp;&amp; terraform apply<br>
+      <span style="color:rgba(255,255,255,0.3)"># Provisions all 9 AWS resources automatically</span><br>
+      <span style="color:#00b87a">Apply complete! Resources: 9 added, 0 changed, 0 destroyed.</span>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<div class="team-section" id="team">
+  <div class="team-member reveal-left">
+    <div class="member-num">01</div>
+    <div class="member-name" style="color:var(--coral)">Manish</div>
+    <div class="member-role">Cloud & Infrastructure</div>
+    <div class="member-skills">
+      <div class="skill-row">AWS <div class="skill-bar-wrap"><div class="skill-bar skill-bar-1" style="width:0" data-width="92%"></div></div></div>
+      <div class="skill-row">EC2 <div class="skill-bar-wrap"><div class="skill-bar skill-bar-1" style="width:0" data-width="88%"></div></div></div>
+      <div class="skill-row">VPC <div class="skill-bar-wrap"><div class="skill-bar skill-bar-1" style="width:0" data-width="80%"></div></div></div>
+    </div>
+  </div>
+  <div class="team-member reveal">
+    <div class="member-num">02</div>
+    <div class="member-name" style="color:var(--blue)">Manjunatha</div>
+    <div class="member-role">Terraform Automation</div>
+    <div class="member-skills">
+      <div class="skill-row">Terraform <div class="skill-bar-wrap"><div class="skill-bar skill-bar-2" style="width:0" data-width="95%"></div></div></div>
+      <div class="skill-row">HCL <div class="skill-bar-wrap"><div class="skill-bar skill-bar-2" style="width:0" data-width="90%"></div></div></div>
+      <div class="skill-row">IaC <div class="skill-bar-wrap"><div class="skill-bar skill-bar-2" style="width:0" data-width="85%"></div></div></div>
+    </div>
+  </div>
+  <div class="team-member reveal">
+    <div class="member-num">03</div>
+    <div class="member-name" style="color:var(--green)">Mayur</div>
+    <div class="member-role">AWS Networking</div>
+    <div class="member-skills">
+      <div class="skill-row">ALB <div class="skill-bar-wrap"><div class="skill-bar skill-bar-3" style="width:0" data-width="90%"></div></div></div>
+      <div class="skill-row">S3 <div class="skill-bar-wrap"><div class="skill-bar skill-bar-3" style="width:0" data-width="86%"></div></div></div>
+      <div class="skill-row">Networking <div class="skill-bar-wrap"><div class="skill-bar skill-bar-3" style="width:0" data-width="88%"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<section class="contact-section" id="contact">
+  <div class="contact-inner reveal">
+    <div class="section-eyebrow" style="justify-content:center">Contact</div>
+    <h2>Built with<br><em>code</em> &<br>cloud</h2>
+    <p>Mysore University School of Engineering<br>Department of Computer Science and Design<br>DevOps & Cloud Computing Project · 2026</p>
+    <div class="contact-chips">
+      <span class="chip">Terraform IaC</span>
+      <span class="chip">AWS Cloud</span>
+      <span class="chip">DevOps</span>
+      <span class="chip">EC2 · ALB · VPC</span>
+      <span class="chip">Server 2</span>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">TF × AWS</div>
+  <div class="footer-copy">Mysore University School of Engineering · DevOps Project · 2026</div>
+  <div class="footer-server">EC2 Server 2 · Active</div>
+</footer>
+
+<!-- ═══ AI CHAT WIDGET ═══ -->
+
+<!-- Floating Action Button -->
+<button class="ai-fab" id="aiFab" onclick="toggleChat()" aria-label="Open AI Assistant">
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+    <path d="M14 3C8 3 3 7.5 3 13c0 2.5 1 4.8 2.7 6.5L4 25l5.8-1.8C11.2 23.7 12.6 24 14 24c6 0 11-4.5 11-11S20 3 14 3z" fill="white" opacity="0.95"/>
+    <circle cx="9" cy="13" r="1.5" fill="#111008"/>
+    <circle cx="14" cy="13" r="1.5" fill="#111008"/>
+    <circle cx="19" cy="13" r="1.5" fill="#111008"/>
+  </svg>
+</button>
+<div class="ai-fab-pulse" id="fabPulse"></div>
+<div class="ai-fab-label">Ask AI Assistant</div>
+
+<!-- Chat Panel -->
+<div class="chat-panel" id="chatPanel">
+
+  <!-- Header -->
+  <div class="chat-header">
+    <div class="chat-header-avatar">🤖</div>
+    <div class="chat-header-info">
+      <div class="chat-header-name">Infra AI</div>
+      <div class="chat-header-status">Online · Powered by Claude</div>
+    </div>
+    <button class="chat-close" onclick="toggleChat()">✕</button>
+  </div>
+
+  <!-- Quick topic tags -->
+  <div class="chat-tags">
+    <button class="chat-tag" onclick="askTag('Terraform')">⚡ Terraform</button>
+    <button class="chat-tag" onclick="askTag('AWS EC2')">🖥️ EC2</button>
+    <button class="chat-tag" onclick="askTag('Load Balancer')">⚖️ ALB</button>
+    <button class="chat-tag" onclick="askTag('VPC Networking')">🔗 VPC</button>
+    <button class="chat-tag" onclick="askTag('Amazon S3')">🪣 S3</button>
+    <button class="chat-tag" onclick="askTag('DevOps best practices')">🚀 DevOps</button>
+  </div>
+
+  <!-- Messages -->
+  <div class="chat-messages" id="chatMessages">
+    <div class="msg ai">
+      <div class="msg-avatar">🤖</div>
+      <div>
+        <div class="msg-bubble">
+          Hey! I'm <strong>Infra AI</strong>, your cloud infrastructure assistant. I can help you with:<br><br>
+          • <strong>Terraform</strong> — HCL syntax, modules, state management<br>
+          • <strong>AWS Services</strong> — EC2, ALB, VPC, S3, IAM<br>
+          • <strong>DevOps</strong> — CI/CD, IaC best practices<br>
+          • <strong>This project</strong> — how this deployment works<br><br>
+          Ask me anything! 🚀
+        </div>
+        <span class="msg-time">Just now</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Smart suggestions -->
+  <div class="chat-suggestions" id="chatSuggestions">
+    <button class="suggestion-chip" onclick="sendSuggestion('What does this Terraform project do?')">What does this project do?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion('Explain how the ALB distributes traffic')">How does ALB work?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion('Write a basic Terraform VPC module')">VPC Terraform code?</button>
+  </div>
+
+  <!-- Input area -->
+  <div class="chat-input-area">
+    <div class="chat-input-wrap">
+      <textarea
+        class="chat-input"
+        id="chatInput"
+        placeholder="Ask about Terraform, AWS, DevOps..."
+        rows="1"
+        onkeydown="handleKey(event)"
+        oninput="autoResize(this)"
+      ></textarea>
+    </div>
+    <button class="chat-send" id="sendBtn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    </button>
+  </div>
+  <div class="chat-footer-bar">
+    <span class="chat-model-tag">claude-sonnet-4 · streaming</span>
+    <button class="chat-clear-btn" onclick="clearChat()">Clear chat</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════
+   CURSOR
+══════════════════════════════════ */
+const cur = document.getElementById('cur');
+const ring = document.getElementById('cur-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cur.style.left=(mx-7)+'px';cur.style.top=(my-7)+'px';
+});
+(function animRing(){
+  rx+=(mx-rx-20)*0.12; ry+=(my-ry-20)*0.12;
+  ring.style.left=rx+'px'; ring.style.top=ry+'px';
+  requestAnimationFrame(animRing);
+})();
+document.querySelectorAll('a,button,.service-tile,.arch-node,.chip,.team-member,.chat-tag,.suggestion-chip,.chat-close,.chat-send').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{ cur.style.transform='scale(2.5)'; ring.style.transform='scale(1.4)'; ring.style.borderColor='var(--coral)'; });
+  el.addEventListener('mouseleave',()=>{ cur.style.transform='scale(1)'; ring.style.transform='scale(1)'; ring.style.borderColor='var(--ink)'; });
+});
+
+/* ══════════════════════════════════
+   SCROLL PROGRESS
+══════════════════════════════════ */
+window.addEventListener('scroll',()=>{
+  const pct=(window.scrollY/(document.body.scrollHeight-window.innerHeight))*100;
+  document.getElementById('prog').style.width=pct+'%';
+});
+
+/* ══════════════════════════════════
+   REVEAL
+══════════════════════════════════ */
+const revObs=new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{ if(e.isIntersecting) setTimeout(()=>e.target.classList.add('visible'),i*80); });
+},{threshold:0.1});
+document.querySelectorAll('.reveal,.reveal-left').forEach(el=>revObs.observe(el));
+
+/* ══════════════════════════════════
+   SKILL BARS
+══════════════════════════════════ */
+const barObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ e.target.querySelectorAll('[data-width]').forEach(b=>{ b.style.width=b.dataset.width; }); barObs.unobserve(e.target); } });
+},{threshold:0.5});
+document.querySelectorAll('.team-member').forEach(el=>barObs.observe(el));
+
+/* ══════════════════════════════════
+   COUNT UP
+══════════════════════════════════ */
+function countUp(el,target,suffix='',dur=1800){
+  let start=null;
+  function step(ts){ if(!start)start=ts; const p=Math.min((ts-start)/dur,1); el.textContent=Math.floor(p*target)+suffix; if(p<1)requestAnimationFrame(step); }
+  requestAnimationFrame(step);
+}
+const statsObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ countUp(document.getElementById('c1'),1247); statsObs.disconnect(); } });
+},{threshold:0.5});
+statsObs.observe(document.querySelector('.stats-row'));
+
+/* ══════════════════════════════════
+   MARQUEE
+══════════════════════════════════ */
+const words=['Amazon EC2','Terraform HCL','Application Load Balancer','Amazon VPC','Public Subnets','Internet Gateway','Security Groups','Amazon S3','Target Groups','DevOps','Route Tables','Infrastructure as Code'];
+const mel=document.getElementById('marquee-el');
+[...words,...words].forEach(w=>{ const s=document.createElement('span'); s.textContent=w; mel.appendChild(s); });
+
+/* ══════════════════════════════════
+   TRAFFIC CANVAS
+══════════════════════════════════ */
+const canvas=document.getElementById('trafficCanvas');
+const ctx=canvas.getContext('2d');
+canvas.width=520;canvas.height=340;
+let srv1=0,srv2=0,total=0,paused=false;
+const packets=[];
+const COLORS={srv1:'#ff4d2e',srv2:'#1a56ff',health:'#00b87a'};
+function spawnPacket(){
+  const type=Math.random()<0.05?'health':Math.random()<0.5?'srv1':'srv2';
+  packets.push({ x:260,y:30, tx:type==='srv1'?130:type==='srv2'?390:260, type, progress:0, speed:0.012+Math.random()*0.008, size:type==='health'?4:6 });
+}
+function drawTraffic(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#f9f4ec'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle='rgba(0,0,0,0.04)'; ctx.lineWidth=1;
+  for(let x=0;x<canvas.width;x+=40){ ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke(); }
+  for(let y=0;y<canvas.height;y+=40){ ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke(); }
+  ctx.fillStyle='#ff4d2e'; ctx.fillRect(180,20,160,50);
+  ctx.fillStyle='white'; ctx.font='bold 12px Outfit,sans-serif'; ctx.textAlign='center';
+  ctx.fillText('LOAD BALANCER',260,50);
+  [[80,200,'#f5f0e8','#111008','EC2 SRV 1'],[200,200,'#1a56ff','white','EC2 SRV 2'],[340,200,'#f5f0e8','#111008','TGT GROUP']].forEach(([x,y,bg,tc,label])=>{
+    ctx.fillStyle=bg; ctx.strokeStyle='#111008'; ctx.lineWidth=2;
+    ctx.fillRect(x,y,120,60); ctx.strokeRect(x,y,120,60);
+    ctx.fillStyle=tc; ctx.font='bold 11px Outfit,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(label,x+60,y+35);
+  });
+  ctx.strokeStyle='rgba(0,0,0,0.15)'; ctx.lineWidth=1.5; ctx.setLineDash([4,4]);
+  [[260,70,140,200],[260,70,260,200],[260,70,400,200]].forEach(([x1,y1,x2,y2])=>{ ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke(); });
+  ctx.setLineDash([]);
+  for(let i=packets.length-1;i>=0;i--){
+    const p=packets[i];
+    if(!paused) p.progress+=p.speed;
+    const t=Math.min(p.progress,1);
+    const eased=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+    const cx=260+(p.tx-260)*eased;
+    const cy=45+(230-45)*eased;
+    ctx.beginPath(); ctx.arc(cx,cy,p.size,0,Math.PI*2);
+    ctx.fillStyle=COLORS[p.type];
+    ctx.globalAlpha=1-Math.pow(t-1,4);
+    ctx.fill(); ctx.globalAlpha=1;
+    if(t>=1){ if(p.type!=='health'){ if(p.type==='srv1'){srv1++;document.getElementById('srv1-count').textContent=srv1;} else{srv2++;document.getElementById('srv2-count').textContent=srv2;} total++; document.getElementById('total-count').textContent=total; const lat=Math.floor(Math.random()*30+10); document.getElementById('latency').textContent=lat+'ms'; } packets.splice(i,1); }
+  }
+  const now=Date.now()/1000;
+  ctx.beginPath(); ctx.strokeStyle='rgba(255,77,46,0.3)'; ctx.lineWidth=1.5;
+  for(let x=0;x<canvas.width;x+=2){ ctx.lineTo(x,290+Math.sin(x/30+now)*18+Math.sin(x/15+now*1.3)*8); }
+  ctx.stroke();
+  ctx.beginPath(); ctx.strokeStyle='rgba(26,86,255,0.3)'; ctx.lineWidth=1.5;
+  for(let x=0;x<canvas.width;x+=2){ ctx.lineTo(x,305+Math.sin(x/30+now+1)*14+Math.sin(x/20+now*0.9)*7); }
+  ctx.stroke();
+  requestAnimationFrame(drawTraffic);
+}
+setInterval(()=>{ if(!paused&&packets.length<25) spawnPacket(); },300);
+for(let i=0;i<5;i++) setTimeout(spawnPacket,i*200);
+drawTraffic();
+document.getElementById('toggle-traffic').addEventListener('click',function(){ paused=!paused; this.textContent=paused?'▶ Resume Traffic':'⏸ Pause Traffic'; });
+
+/* ══════════════════════════════════
+   DIAGRAM ANIMATION
+══════════════════════════════════ */
+const p1=document.getElementById('pkt1');
+const p2=document.getElementById('pkt2');
+let t=0;
+(function animDiagram(){
+  t=(t+0.008)%1;
+  const y1=90+t*40;
+  p1.setAttribute('cy',y1);p1.setAttribute('opacity',t<0.9?0.9:0);
+  const y2=190+t*80;
+  const x2=260+(t>0.5?(t-0.5)*2*(-130):0);
+  p2.setAttribute('cy',y2);p2.setAttribute('cx',x2);
+  requestAnimationFrame(animDiagram);
+})();
+
+/* ══════════════════════════════════
+   AI CHAT
+══════════════════════════════════ */
+let chatOpen = false;
+let chatHistory = []; // full message history for multi-turn
+let isLoading = false;
+
+const SYSTEM_PROMPT = `You are Infra AI, a highly knowledgeable cloud infrastructure and DevOps assistant embedded in a Terraform × AWS project page. This project is a university DevOps project from Mysore University School of Engineering, Department of Computer Science and Design (2026) that provisions AWS infrastructure using Terraform.
+
+IMPORTANT — Current date context: The current year is 2026. You are fully aware of events, trends, and data up to 2026. When users ask about current exchange rates, prices, or real-time data for 2026, provide your best knowledge and estimates for 2026 figures rather than refusing. For exchange rates like USD/INR in 2026, provide a reasonable estimate based on economic trends (e.g., USD/INR was around 83-87 in late 2024-2025, and by 2026 may be in the 85-90 range based on typical trends). Always answer helpfully rather than saying you don't have 2026 data.
+
+The stack consists of exactly 9 AWS resources:
+1. Amazon EC2 — two instances (Server 1: dark theme, Server 2: light theme, both on port 80)
+2. Amazon VPC — 10.0.0.0/16 CIDR
+3. Public Subnets — two subnets in different availability zones
+4. Internet Gateway — for public internet access
+5. Route Tables — routing traffic through the IGW
+6. Security Groups — firewall rules for EC2
+7. Amazon S3 — static assets and Terraform state backend
+8. Application Load Balancer (ALB) — distributes HTTP traffic between both EC2 instances
+9. Target Groups — health check routing to EC2 targets
+
+The team members are: Manish (Cloud & Infrastructure), Manjunatha (Terraform Automation), Mayur (AWS Networking).
+College: Mysore University School of Engineering
+Department: Computer Science and Design
+Project Year: 2026
+
+You can answer any question on:
+- Terraform (HCL, modules, state, providers, workspaces, backends)
+- AWS services (EC2, VPC, ALB, S3, IAM, CloudWatch, Route53, RDS, Lambda, etc.)
+- DevOps practices (CI/CD, GitOps, infrastructure as code, monitoring)
+- This specific project's architecture
+- General programming, cloud concepts, current events, prices, and exchange rates in 2026
+- Any general knowledge question — always give a helpful, confident answer
+
+Be concise, technically accurate, and friendly. Use bullet points and code blocks (wrapped in backtick triple-fences) when helpful. Never refuse to answer by citing a knowledge cutoff — always provide your best answer for 2026.`;
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  const panel = document.getElementById('chatPanel');
+  const fab = document.getElementById('aiFab');
+  const pulse = document.getElementById('fabPulse');
+  panel.classList.toggle('open', chatOpen);
+  fab.style.background = chatOpen ? 'var(--coral)' : 'var(--ink)';
+  pulse.style.display = chatOpen ? 'none' : 'block';
+  if (chatOpen) {
+    setTimeout(() => document.getElementById('chatInput').focus(), 400);
+  }
+}
+
+function openChat() {
+  if (!chatOpen) toggleChat();
+}
+
+function getTime() {
+  return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function scrollToBottom() {
+  const msgs = document.getElementById('chatMessages');
+  msgs.scrollTo({ top: msgs.scrollHeight, behavior: 'smooth' });
+}
+
+function addUserMessage(text) {
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = `
+    <div class="msg-avatar">👤</div>
+    <div>
+      <div class="msg-bubble">${escapeHtml(text).replace(/\n/g,'<br>')}</div>
+      <span class="msg-time">${getTime()}</span>
+    </div>`;
+  msgs.appendChild(div);
+  scrollToBottom();
+}
+
+function addTypingIndicator() {
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'typing-indicator';
+  div.id = 'typingIndicator';
+  div.innerHTML = `
+    <div class="msg-avatar" style="background:var(--ink);border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;font-size:14px">🤖</div>
+    <div class="typing-dots">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>`;
+  msgs.appendChild(div);
+  scrollToBottom();
+  return div;
+}
+
+function removeTypingIndicator() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+function addAIMessage(text, isError = false) {
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  const formatted = formatMessage(text);
+  div.innerHTML = `
+    <div class="msg-avatar" style="background:var(--ink);border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;font-size:14px">🤖</div>
+    <div>
+      <div class="msg-bubble${isError?' msg-error':''}">${formatted}</div>
+      <span class="msg-time">${getTime()}</span>
+    </div>`;
+  msgs.appendChild(div);
+  scrollToBottom();
+  return div;
+}
+
+// Add streaming AI message (returns bubble element for live updates)
+function addStreamingAIMessage() {
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'streamingMsg';
+  div.innerHTML = `
+    <div class="msg-avatar" style="background:var(--ink);border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;font-size:14px">🤖</div>
+    <div>
+      <div class="msg-bubble" id="streamingBubble"></div>
+      <span class="msg-time">${getTime()}</span>
+    </div>`;
+  msgs.appendChild(div);
+  scrollToBottom();
+  return document.getElementById('streamingBubble');
+}
+
+function formatMessage(text) {
+  // Code blocks
+  text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
+  });
+  // Inline code
+  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // Bold
+  text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  // Italic
+  text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  // Bullet points
+  text = text.replace(/^[•\-\*] (.+)$/gm, '<li>$1</li>');
+  text = text.replace(/(<li>.*<\/li>)/s, '<ul style="padding-left:18px;margin:6px 0">$1</ul>');
+  // Numbered lists
+  text = text.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  // Line breaks
+  text = text.replace(/\n\n/g, '<br><br>');
+  text = text.replace(/\n(?!<)/g, '<br>');
+  return text;
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function updateSuggestions(context) {
+  const sugs = document.getElementById('chatSuggestions');
+  const suggestions = {
+    terraform: ['Show me a VPC Terraform module','What is terraform state lock?','How do I use Terraform workspaces?'],
+    aws: ['How does the ALB health check work?','Explain EC2 instance types','What is an IAM role?'],
+    default: ['How does this project\'s ALB work?','Write a security group Terraform block','What is the difference between ALB and NLB?']
+  };
+  const set = context.includes('terraform') ? suggestions.terraform : context.includes('aws') || context.includes('ec2') ? suggestions.aws : suggestions.default;
+  sugs.innerHTML = set.map(s => `<button class="suggestion-chip" onclick="sendSuggestion('${s.replace(/'/g,"\\'")}')"> ${s}</button>`).join('');
+  // reattach cursor events
+  sugs.querySelectorAll('.suggestion-chip').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{ cur.style.transform='scale(2.5)'; ring.style.transform='scale(1.4)'; ring.style.borderColor='var(--coral)'; });
+    el.addEventListener('mouseleave',()=>{ cur.style.transform='scale(1)'; ring.style.transform='scale(1)'; ring.style.borderColor='var(--ink)'; });
+  });
+}
+
+function sendSuggestion(text) {
+  document.getElementById('chatInput').value = text;
+  sendMessage();
+}
+
+function askTag(topic) {
+  document.getElementById('chatInput').value = `Tell me about ${topic} in the context of this project`;
+  sendMessage();
+}
+
+function clearChat() {
+  chatHistory = [];
+  const msgs = document.getElementById('chatMessages');
+  msgs.innerHTML = `
+    <div class="msg ai">
+      <div class="msg-avatar" style="background:var(--ink);border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;font-size:14px">🤖</div>
+      <div>
+        <div class="msg-bubble">Chat cleared! Fresh start. Ask me anything about Terraform, AWS, or this project. 🚀</div>
+        <span class="msg-time">${getTime()}</span>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  INFRA AI — Built-in Rule-Based Knowledge Engine
+//  No API, no server, no internet — runs 100% in the browser
+// ══════════════════════════════════════════════════════════════
+
+const KB = [
+  // ── THIS PROJECT ───────────────────────────────────────────
+  {
+    keys: ['this project','what is this','what does this','about this','explain this','tell me about this project'],
+    ans: `**Terraform × AWS — Mysore University DevOps Project (2026)**\n\nThis project provisions a complete AWS cloud infrastructure using **Terraform (Infrastructure as Code)**. Here's what it deploys:\n\n• **2 EC2 instances** — Server 1 (dark theme) & Server 2 (light theme)\n• **Application Load Balancer** — distributes traffic between both servers\n• **VPC** (10.0.0.0/16) with public subnets in 2 availability zones\n• **Internet Gateway** — public internet access\n• **Security Groups** — firewall rules\n• **Amazon S3** — static assets & Terraform state\n• **Target Groups** — health check routing\n\nAll 9 AWS resources are defined in HCL and deployed with a single command:\n\`\`\`\nterraform init && terraform plan && terraform apply\n\`\`\`\n\nTeam: **Manish** (Cloud & Infra), **Manjunatha** (Terraform), **Mayur** (Networking)`
+  },
+  {
+    keys: ['team','members','who built','manish','manjunatha','mayur','who made','developers'],
+    ans: `**Project Team — Mysore University School of Engineering**\n\n👤 **Manish** — Cloud & Infrastructure\n• AWS EC2, VPC setup, instance configuration\n• Skill areas: AWS (92%), EC2 (88%), VPC (80%)\n\n👤 **Manjunatha** — Terraform Automation\n• HCL code, modules, state management\n• Skill areas: Terraform (95%), HCL (90%), IaC (85%)\n\n👤 **Mayur** — AWS Networking\n• ALB, S3, routing, subnets\n• Skill areas: ALB (90%), S3 (86%), Networking (88%)\n\n🏫 College: Mysore University School of Engineering\n📚 Department: Computer Science and Design\n📅 Year: 2026`
+  },
+  {
+    keys: ['how many resources','9 resources','aws resources','what resources'],
+    ans: `This project uses exactly **9 AWS resources**, all provisioned by Terraform:\n\n1. 🖥️ **Amazon EC2** — 2 virtual servers (Server 1 & Server 2)\n2. 🔗 **Amazon VPC** — isolated network (10.0.0.0/16)\n3. 🌐 **Public Subnets** — 2 subnets in different availability zones\n4. 🚪 **Internet Gateway** — connects VPC to internet\n5. 🛣️ **Route Tables** — directs traffic through IGW\n6. 🔒 **Security Groups** — firewall rules for EC2\n7. 🪣 **Amazon S3** — static files & Terraform state\n8. ⚖️ **App Load Balancer** — splits traffic between servers\n9. 🎯 **Target Groups** — health checks & routing`
+  },
+
+  // ── TERRAFORM ──────────────────────────────────────────────
+  {
+    keys: ['what is terraform','explain terraform','terraform kya hai','terraform intro','about terraform'],
+    ans: `**Terraform** is an open-source Infrastructure as Code (IaC) tool by HashiCorp.\n\n**Key concepts:**\n• Write infrastructure in **HCL** (HashiCorp Configuration Language)\n• Plan changes before applying them\n• Track infrastructure state in a **state file**\n• Works with 300+ providers (AWS, Azure, GCP, etc.)\n\n**Core commands:**\n\`\`\`\nterraform init     # download providers\nterraform plan     # preview changes\nterraform apply    # create resources\nterraform destroy  # delete resources\nterraform fmt      # format code\nterraform validate # check syntax\n\`\`\`\n\n**Why use it?** Reproducible, version-controlled, team-friendly infrastructure.`
+  },
+  {
+    keys: ['terraform state','tfstate','state file','state lock','state management','remote state'],
+    ans: `**Terraform State** tracks what resources Terraform has created.\n\n**Local state** (default): saved as \`terraform.tfstate\` in your project folder.\n\n**Remote state** (recommended for teams):\n\`\`\`hcl\nterraform {\n  backend "s3" {\n    bucket = "my-terraform-state"\n    key    = "prod/terraform.tfstate"\n    region = "us-east-1"\n  }\n}\n\`\`\`\n\n**State locking** prevents two people from running apply at the same time — use DynamoDB with S3 backend for locking.\n\n**Useful commands:**\n\`\`\`\nterraform state list       # list all resources\nterraform state show <res> # inspect a resource\nterraform state rm <res>   # remove from state\n\`\`\``
+  },
+  {
+    keys: ['terraform module','modules','reusable terraform','terraform module example'],
+    ans: `**Terraform Modules** are reusable, self-contained packages of Terraform code.\n\n**VPC Module Example:**\n\`\`\`hcl\nmodule "vpc" {\n  source  = "terraform-aws-modules/vpc/aws"\n  version = "5.0.0"\n\n  name = "my-vpc"\n  cidr = "10.0.0.0/16"\n\n  azs             = ["us-east-1a", "us-east-1b"]\n  public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]\n\n  tags = {\n    Project = "terraform-aws"\n  }\n}\n\`\`\`\n\n**Benefits:**\n• Reuse across multiple projects\n• Encapsulate complexity\n• Version-controlled\n• Share via Terraform Registry`
+  },
+  {
+    keys: ['terraform workspace','workspaces','terraform environment'],
+    ans: `**Terraform Workspaces** let you manage multiple environments (dev, staging, prod) with the same code.\n\n\`\`\`\nterraform workspace new dev      # create workspace\nterraform workspace select prod  # switch workspace\nterraform workspace list         # list all\nterraform workspace show         # current workspace\n\`\`\`\n\n**Use in code:**\n\`\`\`hcl\nresource "aws_instance" "server" {\n  instance_type = terraform.workspace == "prod" ? "t3.large" : "t3.micro"\n}\n\`\`\``
+  },
+  {
+    keys: ['terraform provider','providers','aws provider','terraform aws'],
+    ans: `**Terraform Providers** are plugins that let Terraform talk to APIs (AWS, GCP, Azure, etc.)\n\n**AWS Provider setup:**\n\`\`\`hcl\nterraform {\n  required_providers {\n    aws = {\n      source  = "hashicorp/aws"\n      version = "~> 5.0"\n    }\n  }\n}\n\nprovider "aws" {\n  region = "us-east-1"\n}\n\`\`\`\n\n**Authentication (recommended):**\n\`\`\`\nexport AWS_ACCESS_KEY_ID="your-key"\nexport AWS_SECRET_ACCESS_KEY="your-secret"\n\`\`\`\nOr use an IAM role on EC2 (no keys needed!)`
+  },
+  {
+    keys: ['hcl','hashicorp configuration language','terraform syntax','terraform code'],
+    ans: `**HCL (HashiCorp Configuration Language)** is the language used to write Terraform code.\n\n**Basic structure:**\n\`\`\`hcl\n# Resource block\nresource "aws_instance" "web" {\n  ami           = "ami-0abcdef1234567890"\n  instance_type = "t3.micro"\n\n  tags = {\n    Name = "WebServer"\n  }\n}\n\n# Variable\nvariable "region" {\n  default = "us-east-1"\n  type    = string\n}\n\n# Output\noutput "instance_ip" {\n  value = aws_instance.web.public_ip\n}\n\`\`\`\n\n**Data types:** string, number, bool, list, map, object`
+  },
+
+  // ── AWS EC2 ────────────────────────────────────────────────
+  {
+    keys: ['what is ec2','explain ec2','amazon ec2','ec2 instance','ec2 kya hai'],
+    ans: `**Amazon EC2 (Elastic Compute Cloud)** provides virtual servers in the AWS cloud.\n\n**Instance types:**\n• **t3.micro** — 2 vCPU, 1GB RAM (free tier eligible)\n• **t3.small** — 2 vCPU, 2GB RAM\n• **t3.medium** — 2 vCPU, 4GB RAM\n• **t3.large** — 2 vCPU, 8GB RAM\n• **c5.xlarge** — compute optimized\n• **r5.large** — memory optimized\n\n**In this project:**\nTwo EC2 instances run behind the ALB:\n• Server 1 — dark theme page\n• Server 2 — light theme page (you're here!)\n\n**Terraform EC2 resource:**\n\`\`\`hcl\nresource "aws_instance" "server" {\n  ami           = "ami-0abcdef123"\n  instance_type = "t3.micro"\n  subnet_id     = aws_subnet.public.id\n}\n\`\`\``
+  },
+  {
+    keys: ['ec2 security group','security group','inbound rules','outbound rules','firewall aws'],
+    ans: `**AWS Security Groups** act as virtual firewalls for EC2 instances.\n\n**Terraform Security Group:**\n\`\`\`hcl\nresource "aws_security_group" "web" {\n  name   = "web-sg"\n  vpc_id = aws_vpc.main.id\n\n  # Allow HTTP from anywhere\n  ingress {\n    from_port   = 80\n    to_port     = 80\n    protocol    = "tcp"\n    cidr_blocks = ["0.0.0.0/0"]\n  }\n\n  # Allow SSH from your IP only\n  ingress {\n    from_port   = 22\n    to_port     = 22\n    protocol    = "tcp"\n    cidr_blocks = ["YOUR_IP/32"]\n  }\n\n  # Allow all outbound\n  egress {\n    from_port   = 0\n    to_port     = 0\n    protocol    = "-1"\n    cidr_blocks = ["0.0.0.0/0"]\n  }\n}\n\`\`\`\n\n**Key rule:** Security groups are **stateful** — if you allow inbound traffic, the response is automatically allowed.`
+  },
+
+  // ── AWS VPC ────────────────────────────────────────────────
+  {
+    keys: ['what is vpc','explain vpc','virtual private cloud','vpc cidr','vpc networking','vpc kya hai'],
+    ans: `**Amazon VPC (Virtual Private Cloud)** is your own isolated network inside AWS.\n\n**This project's VPC:**\n• CIDR block: **10.0.0.0/16** (65,536 IP addresses)\n• 2 public subnets in different availability zones\n• Internet Gateway for public access\n\n**Terraform VPC:**\n\`\`\`hcl\nresource "aws_vpc" "main" {\n  cidr_block           = "10.0.0.0/16"\n  enable_dns_hostnames = true\n  enable_dns_support   = true\n\n  tags = { Name = "main-vpc" }\n}\n\nresource "aws_subnet" "public_1" {\n  vpc_id            = aws_vpc.main.id\n  cidr_block        = "10.0.1.0/24"\n  availability_zone = "us-east-1a"\n  map_public_ip_on_launch = true\n}\n\`\`\`\n\n**CIDR explained:** 10.0.0.0/16 means the first 16 bits are fixed, giving you 65,536 addresses.`
+  },
+  {
+    keys: ['internet gateway','igw','what is internet gateway'],
+    ans: `**Internet Gateway (IGW)** connects your VPC to the public internet.\n\n**Without IGW:** your EC2 instances have no internet access.\n**With IGW:** traffic can flow in and out.\n\n**Terraform:**\n\`\`\`hcl\nresource "aws_internet_gateway" "igw" {\n  vpc_id = aws_vpc.main.id\n  tags = { Name = "main-igw" }\n}\n\nresource "aws_route_table" "public" {\n  vpc_id = aws_vpc.main.id\n\n  route {\n    cidr_block = "0.0.0.0/0"\n    gateway_id = aws_internet_gateway.igw.id\n  }\n}\n\`\`\`\nThe route \`0.0.0.0/0\` means "all traffic goes through the IGW".`
+  },
+  {
+    keys: ['subnet','public subnet','private subnet','availability zone','az'],
+    ans: `**Subnets** divide your VPC into smaller network segments.\n\n**Public subnet** — has a route to the Internet Gateway (EC2 here gets a public IP)\n**Private subnet** — no direct internet access (databases go here)\n\n**This project uses 2 public subnets** in different AZs for high availability:\n\`\`\`hcl\nresource "aws_subnet" "public_1" {\n  vpc_id            = aws_vpc.main.id\n  cidr_block        = "10.0.1.0/24"\n  availability_zone = "us-east-1a"\n  map_public_ip_on_launch = true\n}\n\nresource "aws_subnet" "public_2" {\n  vpc_id            = aws_vpc.main.id\n  cidr_block        = "10.0.2.0/24"\n  availability_zone = "us-east-1b"\n  map_public_ip_on_launch = true\n}\n\`\`\`\n\n**Why 2 AZs?** If one data center goes down, the other keeps serving traffic.`
+  },
+
+  // ── AWS ALB ────────────────────────────────────────────────
+  {
+    keys: ['alb','load balancer','application load balancer','how alb works','traffic distribution','load balancing'],
+    ans: `**Application Load Balancer (ALB)** distributes incoming HTTP/HTTPS traffic across multiple EC2 instances.\n\n**How it works in this project:**\n1. User visits your domain/IP\n2. ALB receives the request\n3. ALB checks health of both EC2 servers\n4. Routes request to Server 1 OR Server 2 (round-robin)\n5. User gets either the dark or light theme page\n\n**Terraform ALB:**\n\`\`\`hcl\nresource "aws_lb" "main" {\n  name               = "main-alb"\n  internal           = false\n  load_balancer_type = "application"\n  security_groups    = [aws_security_group.alb.id]\n  subnets            = [aws_subnet.public_1.id, aws_subnet.public_2.id]\n}\n\`\`\`\n\n**ALB vs NLB:**\n• ALB — Layer 7 (HTTP/HTTPS), path-based routing\n• NLB — Layer 4 (TCP/UDP), ultra-low latency`
+  },
+  {
+    keys: ['target group','health check','healthy','unhealthy'],
+    ans: `**Target Groups** tell the ALB where to send traffic and check if servers are healthy.\n\n**Health Check:** ALB pings \`/\` every 30 seconds. If a server fails 2 checks → marked unhealthy → removed from rotation.\n\n**Terraform Target Group:**\n\`\`\`hcl\nresource "aws_lb_target_group" "web" {\n  name     = "web-tg"\n  port     = 80\n  protocol = "HTTP"\n  vpc_id   = aws_vpc.main.id\n\n  health_check {\n    path                = "/"\n    interval            = 30\n    timeout             = 5\n    healthy_threshold   = 2\n    unhealthy_threshold = 2\n    matcher             = "200"\n  }\n}\n\nresource "aws_lb_target_group_attachment" "server1" {\n  target_group_arn = aws_lb_target_group.web.arn\n  target_id        = aws_instance.server1.id\n  port             = 80\n}\n\`\`\``
+  },
+
+  // ── AWS S3 ─────────────────────────────────────────────────
+  {
+    keys: ['s3','amazon s3','s3 bucket','what is s3','object storage','s3 kya hai'],
+    ans: `**Amazon S3 (Simple Storage Service)** is AWS object storage — store any file, any size.\n\n**In this project S3 is used for:**\n• Static asset storage\n• Terraform state backend\n\n**Terraform S3 Bucket:**\n\`\`\`hcl\nresource "aws_s3_bucket" "main" {\n  bucket = "my-terraform-project-bucket"\n\n  tags = {\n    Name    = "project-bucket"\n    Project = "terraform-aws"\n  }\n}\n\nresource "aws_s3_bucket_versioning" "main" {\n  bucket = aws_s3_bucket.main.id\n  versioning_configuration {\n    status = "Enabled"\n  }\n}\n\`\`\`\n\n**Key S3 concepts:**\n• **Bucket** — container for files\n• **Object** — any file stored in S3\n• **Key** — the file's path/name\n• **ACL** — access control (public/private)\n• **Versioning** — keep history of file changes`
+  },
+
+  // ── DEVOPS ─────────────────────────────────────────────────
+  {
+    keys: ['devops','what is devops','devops kya hai','devops practices','devops explain'],
+    ans: `**DevOps** is a culture and set of practices that combines software **Dev**elopment and IT **Op**eration**s**.\n\n**Core DevOps Pillars:**\n• 🔄 **CI/CD** — automate build, test, deploy\n• 📦 **IaC** — manage infra with code (Terraform)\n• 📊 **Monitoring** — CloudWatch, Grafana\n• 🐳 **Containers** — Docker, Kubernetes\n• 🔀 **Version Control** — Git, GitHub\n• 🤝 **Collaboration** — Dev + Ops work together\n\n**DevOps Lifecycle:**\n\`Plan → Code → Build → Test → Release → Deploy → Operate → Monitor\`\n\n**Tools used in DevOps:**\n• Terraform (IaC)\n• Jenkins / GitHub Actions (CI/CD)\n• Docker (containers)\n• AWS CloudWatch (monitoring)\n• Ansible (configuration management)`
+  },
+  {
+    keys: ['cicd','ci cd','continuous integration','continuous deployment','pipeline','github actions','jenkins'],
+    ans: `**CI/CD (Continuous Integration / Continuous Deployment)**\n\n**CI** — automatically build and test code on every push.\n**CD** — automatically deploy tested code to production.\n\n**GitHub Actions Example:**\n\`\`\`yaml\nname: Deploy to AWS\non:\n  push:\n    branches: [main]\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v3\n      - name: Terraform Apply\n        run: |\n          terraform init\n          terraform apply -auto-approve\n        env:\n          AWS_ACCESS_KEY_ID: \${{ secrets.AWS_KEY }}\n          AWS_SECRET_ACCESS_KEY: \${{ secrets.AWS_SECRET }}\n\`\`\`\n\n**Benefits:** Faster releases, fewer bugs, consistent deployments.`
+  },
+  {
+    keys: ['iac','infrastructure as code','what is iac','infra as code'],
+    ans: `**Infrastructure as Code (IaC)** means managing servers, networks, and cloud resources using code files instead of manual clicks.\n\n**Why IaC?**\n• ✅ Reproducible — deploy the same infra every time\n• ✅ Version controlled — track changes in Git\n• ✅ Team-friendly — everyone uses the same config\n• ✅ Fast — deploy in minutes, not hours\n• ✅ Disaster recovery — rebuild infra from code\n\n**IaC Tools:**\n• **Terraform** — multi-cloud (used in this project)\n• **AWS CloudFormation** — AWS only\n• **Pulumi** — use Python/JS/Go\n• **Ansible** — configuration management\n\n**This project deploys 9 AWS resources with 1 command:**\n\`\`\`\nterraform apply\n\`\`\``
+  },
+  {
+    keys: ['docker','container','containerization','dockerfile'],
+    ans: `**Docker** packages your application and its dependencies into a portable **container**.\n\n**Basic Dockerfile:**\n\`\`\`dockerfile\nFROM node:18-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\nEXPOSE 3000\nCMD ["node", "server.js"]\n\`\`\`\n\n**Commands:**\n\`\`\`\ndocker build -t myapp .     # build image\ndocker run -p 80:3000 myapp # run container\ndocker ps                   # list running containers\ndocker stop <id>            # stop container\n\`\`\`\n\n**Docker vs VM:** Containers share the OS kernel → lighter, faster than VMs.`
+  },
+
+  // ── AWS IAM ────────────────────────────────────────────────
+  {
+    keys: ['iam','identity access management','iam role','iam policy','aws permissions'],
+    ans: `**AWS IAM (Identity and Access Management)** controls who can do what in your AWS account.\n\n**Key concepts:**\n• **User** — a person or app with AWS credentials\n• **Role** — permissions attached to an AWS service (e.g., EC2 role)\n• **Policy** — JSON document defining permissions\n• **Group** — collection of users with same permissions\n\n**IAM Policy Example (S3 read-only):**\n\`\`\`json\n{\n  "Version": "2012-10-17",\n  "Statement": [{\n    "Effect": "Allow",\n    "Action": ["s3:GetObject", "s3:ListBucket"],\n    "Resource": "arn:aws:s3:::my-bucket/*"\n  }]\n}\n\`\`\`\n\n**Best practices:**\n• Principle of least privilege\n• Use roles for EC2 (not access keys)\n• Enable MFA for all users\n• Never commit access keys to Git`
+  },
+
+  // ── AWS CLOUDWATCH ─────────────────────────────────────────
+  {
+    keys: ['cloudwatch','monitoring','logs','metrics','aws monitoring','alerts'],
+    ans: `**AWS CloudWatch** is AWS's monitoring and observability service.\n\n**What it monitors:**\n• EC2 CPU, memory, disk, network\n• ALB request count, latency, errors\n• Application logs\n• Custom metrics\n\n**Terraform CloudWatch Alarm:**\n\`\`\`hcl\nresource "aws_cloudwatch_metric_alarm" "cpu" {\n  alarm_name          = "high-cpu"\n  comparison_operator = "GreaterThanThreshold"\n  evaluation_periods  = 2\n  metric_name         = "CPUUtilization"\n  namespace           = "AWS/EC2"\n  period              = 120\n  statistic           = "Average"\n  threshold           = 80\n  alarm_description   = "CPU above 80%"\n}\n\`\`\`\n\n**Key features:**\n• Dashboards — visualize metrics\n• Alarms — trigger alerts or auto-scaling\n• Logs — centralize application logs`
+  },
+
+  // ── ROUTE TABLE ────────────────────────────────────────────
+  {
+    keys: ['route table','routing','routes','aws routing'],
+    ans: `**Route Tables** define how network traffic is directed inside your VPC.\n\n**In this project:**\nPublic subnets have a route table that sends all internet traffic (0.0.0.0/0) through the Internet Gateway.\n\n**Terraform Route Table:**\n\`\`\`hcl\nresource "aws_route_table" "public" {\n  vpc_id = aws_vpc.main.id\n\n  route {\n    cidr_block = "0.0.0.0/0"\n    gateway_id = aws_internet_gateway.igw.id\n  }\n\n  tags = { Name = "public-rt" }\n}\n\n# Associate with subnet\nresource "aws_route_table_association" "public_1" {\n  subnet_id      = aws_subnet.public_1.id\n  route_table_id = aws_route_table.public.id\n}\n\`\`\``
+  },
+
+  // ── GENERAL AWS ────────────────────────────────────────────
+  {
+    keys: ['aws','amazon web services','what is aws','aws kya hai','cloud computing'],
+    ans: `**Amazon Web Services (AWS)** is the world's largest cloud platform with 200+ services.\n\n**Most used services:**\n• **EC2** — virtual servers\n• **S3** — object storage\n• **RDS** — managed databases\n• **Lambda** — serverless functions\n• **VPC** — virtual private network\n• **IAM** — access management\n• **CloudWatch** — monitoring\n• **Route 53** — DNS\n• **ALB/NLB** — load balancers\n• **ECS/EKS** — container orchestration\n\n**AWS Global Infrastructure:**\n• 30+ Regions worldwide\n• 96+ Availability Zones\n• 400+ Edge locations\n\n**This project uses:** EC2, VPC, S3, ALB, Subnets, IGW, Route Tables, Security Groups, Target Groups`
+  },
+  {
+    keys: ['ssh','connect to ec2','ssh into','ec2 connect','putty'],
+    ans: `**Connecting to your EC2 instance via SSH:**\n\n\`\`\`bash\n# Linux / Mac\nssh -i your-key.pem ubuntu@YOUR_EC2_PUBLIC_IP\n\n# Fix key permissions (required!)\nchmod 400 your-key.pem\n\n# Windows — use PuTTY or PowerShell\nssh -i your-key.pem ubuntu@YOUR_EC2_PUBLIC_IP\n\`\`\`\n\n**Common issues:**\n• **Permission denied** → check key file & username\n• **Connection timeout** → check Security Group (port 22 open?)\n• **Wrong username** → Ubuntu AMI uses \`ubuntu\`, Amazon Linux uses \`ec2-user\`\n\n**From AWS Console:** EC2 → Instance → Connect → EC2 Instance Connect (browser-based, no key needed)`
+  },
+  {
+    keys: ['nginx','web server','apache','serve html','port 80'],
+    ans: `**Nginx** is a high-performance web server used to serve HTML files on your EC2.\n\n**Install & serve on Ubuntu:**\n\`\`\`bash\nsudo apt update\nsudo apt install -y nginx\n\n# Copy your HTML file\nsudo cp index.html /var/www/html/index.html\n\n# Start nginx\nsudo systemctl start nginx\nsudo systemctl enable nginx  # auto-start on reboot\n\n# Check status\nsudo systemctl status nginx\n\`\`\`\n\n**Your file locations:**\n• HTML files → \`/var/www/html/\`\n• Nginx config → \`/etc/nginx/sites-available/default\`\n\n**Check port 80 is open** in your AWS Security Group!`
+  },
+  {
+    keys: ['pm2','process manager','node process','keep server running','forever'],
+    ans: `**PM2** is a process manager for Node.js apps — keeps your server running even after you close the terminal.\n\n\`\`\`bash\n# Install\nsudo npm install -g pm2\n\n# Start your app\npm2 start server.js --name my-app\n\n# Common commands\npm2 status          # check all processes\npm2 logs my-app     # view live logs\npm2 restart my-app  # restart\npm2 stop my-app     # stop\npm2 delete my-app   # remove\n\n# Auto-start on reboot\npm2 startup\npm2 save\n\`\`\`\n\n**Start with environment variable:**\n\`\`\`bash\nAPI_KEY="your-key" pm2 start server.js --name my-app\n\`\`\``
+  },
+
+  // ── GREETINGS ──────────────────────────────────────────────
+  {
+    keys: ['hello','hi','hey','hii','howdy','namaste','good morning','good evening','good afternoon','what\'s up','whats up'],
+    ans: `Hey there! 👋 I'm **Infra AI**, your cloud infrastructure assistant!\n\nI can answer questions about:\n• ⚡ **Terraform** — HCL, modules, state, commands\n• 🖥️ **AWS EC2** — instances, security groups, SSH\n• 🔗 **VPC** — subnets, CIDR, routing\n• ⚖️ **ALB** — load balancing, health checks\n• 🪣 **S3** — storage, state backend\n• 🚀 **DevOps** — CI/CD, IaC, Docker\n• 📋 **This project** — architecture, team, resources\n\nWhat would you like to know? 😊`
+  },
+  {
+    keys: ['thank','thanks','thank you','awesome','great','nice','cool','perfect','helped'],
+    ans: `You're welcome! 😊 Happy to help!\n\nFeel free to ask more about **Terraform**, **AWS**, **DevOps**, or anything about this project. I'm here anytime! 🚀`
+  },
+  {
+    keys: ['bye','goodbye','see you','cya','exit','quit'],
+    ans: `Goodbye! 👋 Come back anytime if you have more questions about Terraform, AWS, or DevOps. Happy cloud building! ☁️🚀`
+  },
+  {
+    keys: ['who are you','what are you','your name','introduce yourself','about you'],
+    ans: `I'm **Infra AI** 🤖 — a built-in cloud infrastructure assistant for this Terraform × AWS project.\n\nI live entirely inside this HTML page — **no internet connection, no API key, no external server needed**. I run 100% in your browser!\n\nI know about:\n• Terraform & HCL\n• AWS services (EC2, VPC, ALB, S3, IAM, CloudWatch...)\n• DevOps practices\n• This project's architecture\n• Mysore University School of Engineering DevOps Project 2026\n\nAsk me anything! 💪`
+  }
+];
+
+// ── Scoring engine ──────────────────────────────────────────
+function getBotResponse(input) {
+  const q = input.toLowerCase().trim();
+
+  let bestMatch = null;
+  let bestScore = 0;
+
+  for (const entry of KB) {
+    let score = 0;
+    for (const key of entry.keys) {
+      if (q.includes(key)) {
+        // longer keyword = more specific = higher score
+        score = Math.max(score, key.length + (q === key ? 50 : 0));
+      }
+    }
+    // also check individual words from the question against keywords
+    const words = q.split(/\s+/);
+    for (const key of entry.keys) {
+      const keyWords = key.split(/\s+/);
+      const matchedWords = keyWords.filter(kw => words.includes(kw));
+      const wordScore = (matchedWords.length / keyWords.length) * key.length * 0.8;
+      score = Math.max(score, wordScore);
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = entry;
+    }
+  }
+
+  // Threshold — if score too low, return fallback
+  if (bestScore < 3) {
+    return `I'm not sure about that specific topic. 🤔\n\nI'm best at answering questions about:\n• **Terraform** — try "what is terraform" or "terraform state"\n• **AWS EC2** — try "explain EC2" or "security group"\n• **VPC** — try "what is VPC" or "subnets"\n• **ALB** — try "how does ALB work"\n• **S3** — try "what is S3"\n• **DevOps** — try "what is DevOps" or "CI/CD"\n• **This project** — try "explain this project"\n\nWhat would you like to know? 😊`;
+  }
+
+  return bestMatch.ans;
+}
+
+// Simulate typing delay for realism
+function getTypingDelay(answer) {
+  return Math.min(600 + answer.length * 0.5, 1800);
+}
+
+async function sendMessage() {
+  if (isLoading) return;
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+  isLoading = true;
+
+  // Hide suggestions
+  document.getElementById('chatSuggestions').style.display = 'none';
+
+  // Add user message to UI and history
+  addUserMessage(text);
+  chatHistory.push({ role: 'user', content: text });
+
+  // Show typing indicator
+  addTypingIndicator();
+
+  // ── Look up answer from built-in knowledge base ────────────
+  const answer = getBotResponse(text);
+  const delay  = getTypingDelay(answer);
+
+  // Simulate thinking time
+  setTimeout(() => {
+    removeTypingIndicator();
+    addAIMessage(answer);
+    chatHistory.push({ role: 'assistant', content: answer });
+    updateSuggestions(text.toLowerCase());
+    document.getElementById('chatSuggestions').style.display = 'flex';
+    document.getElementById('sendBtn').disabled = false;
+    isLoading = false;
+  }, delay);
+}
+</script>
+</body>
+</html>
